@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>联动福利</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;min-height:100%;font-family:'Microsoft YaHei','PingFang SC',sans-serif;overflow-x:hidden;background:#000}
+
+/* ---------- 主容器 ---------- */
+.container{
+  position:relative;z-index:1;width:100%;max-width:420px;
+  margin:0 auto;min-height:100vh;background:#000;
+}
+
+/* ---------- 海报区域 ---------- */
+.hero-banner{
+  width:100%;position:relative;
+}
+.hero-banner img{
+  width:100%;display:block;
+}
+
+/* ---------- 呼吸动画 ---------- */
+@keyframes breathe{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.06)}
+}
+.breathe-anim{
+  animation:breathe 1.5s ease-in-out infinite;
+}
+
+/* ---------- 滚动通知条（胶囊气泡横滚） ---------- */
+.notify-bar{
+  position:absolute;
+  left:0;right:0;
+  bottom:60px;
+  z-index:10;
+  overflow:hidden;
+  height:30px;
+}
+.notify-track{
+  display:flex;
+  white-space:nowrap;
+  animation:marquee-scroll 30s linear infinite;
+  height:30px;
+  align-items:center;
+  gap:8px;
+}
+.notify-track .bubble{
+  display:inline-flex;
+  align-items:center;
+  height:26px;
+  padding:0 10px;
+  border-radius:13px;
+  font-size:11px;
+  color:#fff;
+  font-weight:600;
+  letter-spacing:.3px;
+  white-space:nowrap;
+  background:rgba(0,0,0,.7);
+  flex-shrink:0;
+  box-shadow:0 1px 3px rgba(0,0,0,.3);
+}
+@keyframes marquee-scroll{
+  0%{transform:translateX(0)}
+  100%{transform:translateX(-50%)}
+}
+
+/* ---------- 输入提示图片 ---------- */
+.input-hint-img{
+  text-align:left;
+  padding:10px 18px 2px 8px;
+  position:relative;z-index:3;
+  left:17px;top:3px;   /* ?adjust 固化：第一步提示位置 */
+  pointer-events:none;   /* 提示图不拦截点击，保证下方输入框可点可输入 */
+}
+.input-hint-img img{
+  width:50%;
+  display:block;
+}
+.input-hint-img.hidden{
+  display:none;
+}
+
+/* ---------- 输入区域 ---------- */
+.input-section{
+  padding:4px 18px 8px;
+  position:relative;z-index:4;   /* 高于提示图，确保输入框在上层可聚焦 */
+}
+.input-wrap{
+  background:#fff;
+  border-radius:28px;
+  padding:0 18px 0 12px;
+  display:flex;align-items:center;gap:10px;
+  height:54px;
+  border:none;
+  box-shadow:0 2px 8px rgba(0,0,0,.15);
+}
+.input-wrap:focus-within{
+  box-shadow:0 2px 12px rgba(255,126,179,.25);
+  border:1.5px solid #ff7eb3;
+}
+.input-wrap .icon{
+  width:24px;height:24px;flex-shrink:0;object-fit:contain;
+}
+.input-wrap input{
+  flex:1;border:none;outline:none;
+  font-size:18px;color:#333;font-weight:500;letter-spacing:2px;
+  background:transparent;height:100%;
+}
+.input-wrap input::placeholder{color:#bbb;font-size:17px;letter-spacing:2px}
+
+/* ---------- 验证码输入框 ---------- */
+.verify-section{
+  padding:4px 18px 8px;
+  position:relative;z-index:5;   /* 高于手机号输入框，保证第二步提示图不被遮挡 */
+  transform:translate(-1px,2px);   /* ?adjust 固化：验证码框位置 */
+  display:none;
+}
+.verify-section.show{display:block}
+.verify-step-img{
+  position:absolute;
+  right:-42px;
+  top:-35px;
+  transform:translate(-14px,-2px);   /* ?adjust 固化：第二步提示位置 */
+  z-index:5;
+  pointer-events:none;   /* 提示图不拦截点击，保证下方验证码输入框/按钮可点 */
+}
+.verify-step-img img{
+  width:240px;
+  display:block;
+}
+.verify-wrap{
+  background:#fff;
+  border-radius:28px;
+  padding:0 4px 0 12px;
+  display:flex;align-items:center;gap:10px;
+  height:54px;
+  border:none;
+  box-shadow:0 2px 8px rgba(0,0,0,.15);
+}
+.verify-wrap:focus-within{
+  box-shadow:0 2px 12px rgba(255,126,179,.25);
+  border:1.5px solid #ff7eb3;
+}
+.verify-wrap .icon{
+  width:24px;height:24px;flex-shrink:0;
+  font-size:22px;line-height:24px;text-align:center;
+}
+.verify-wrap input{
+  flex:1;border:none;outline:none;
+  font-size:18px;color:#333;font-weight:500;letter-spacing:2px;
+  background:transparent;height:100%;
+}
+.verify-wrap input::placeholder{color:#bbb;font-size:17px;letter-spacing:2px}
+.verify-code-btn{
+  flex-shrink:0;
+  height:36px;
+  padding:0 12px;
+  border-radius:18px;
+  background:linear-gradient(135deg,#ff8ab3,#ff5e9c);
+  color:#fff;font-size:13px;font-weight:700;
+  border:none;cursor:pointer;
+  letter-spacing:1px;
+  white-space:nowrap;
+  box-shadow:0 2px 6px rgba(255,94,156,.3);
+  transform:translate(-32px,0px);   /* ?adjust 固化：获取验证码按钮位置 */
+}
+.verify-code-btn:disabled{
+  background:#555;color:#aaa;cursor:not-allowed;
+  box-shadow:none;
+}
+
+/* ---------- 协议 ---------- */
+.agree-section{
+  padding:4px 20px 8px;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  position:relative;z-index:3;
+  transform:translateY(4px);   /* ?adjust 固化：协议下移 */
+}
+.agree-section input[type="checkbox"]{
+  width:18px;height:18px;
+  accent-color:#ff7eb3;flex-shrink:0;
+}
+.agree-section label{
+  font-size:14px;color:rgba(220,210,240,.7);line-height:1.6;
+  font-weight:500;
+}
+.agree-section label .hl{
+  color:#f5a623;font-weight:600;
+}
+
+/* ---------- 立即领取按钮（立即获取按钮.PNG 直接使用，可 ?adjust 微调） ---------- */
+.claim-btn-section{
+  padding:0 18px 24px;
+  position:relative;z-index:3;
+}
+.claim-btn-crop{
+  width:90%;
+  margin:-6px auto 0;
+  transform:translate(-4px,8px);   /* ?adjust 固化：领取按钮位置 */
+}
+.claim-btn-crop img{
+  width:100%;
+  display:block;
+  cursor:pointer;
+  transition:transform .15s;
+}
+.claim-btn-crop img:active{transform:scale(.96)}
+.claim-btn-crop img.breathe-anim{
+  animation:breathe 1.5s ease-in-out infinite;
+}
+
+/* ---------- Loading（蛋仔派对风格：糖果 splash + 蛋仔 mascot + 气泡读条） ---------- */
+.loading-overlay{
+  position:fixed;inset:0;
+  background:
+    radial-gradient(circle at 50% 34%, rgba(255,255,255,.82) 0 26%, transparent 60%),
+    radial-gradient(circle at 16% 16%, rgba(255,238,170,.6) 0 20%, transparent 56%),
+    radial-gradient(circle at 86% 74%, rgba(160,214,255,.55) 0 24%, transparent 60%),
+    linear-gradient(165deg,#eaf6ff 0%,#dff0ff 32%,#fff4d8 66%,#ffe7f0 100%);
+  z-index:100;
+  display:none;align-items:center;justify-content:center;
+  flex-direction:column;gap:26px;
+  overflow:hidden;
+}
+.loading-overlay.active{display:flex}
+
+/* 漂浮装饰泡泡 */
+.load-bubbles{position:absolute;inset:0;pointer-events:none}
+.load-bubbles .lb{
+  position:absolute;border-radius:50%;
+  background:radial-gradient(circle at 32% 30%,rgba(255,255,255,.95),rgba(255,255,255,.18) 60%,transparent 72%);
+  opacity:.7;animation:lb-float 5s ease-in-out infinite;
+}
+.load-bubbles .lb:nth-child(1){width:26px;height:26px;left:12%;top:16%;animation-delay:0s}
+.load-bubbles .lb:nth-child(2){width:16px;height:16px;left:80%;top:13%;animation-delay:.8s}
+.load-bubbles .lb:nth-child(3){width:34px;height:34px;left:20%;top:74%;animation-delay:1.6s}
+.load-bubbles .lb:nth-child(4){width:12px;height:12px;left:62%;top:64%;animation-delay:2.2s}
+.load-bubbles .lb:nth-child(5){width:20px;height:20px;left:86%;top:50%;animation-delay:1.2s}
+.load-bubbles .lb:nth-child(6){width:14px;height:14px;left:46%;top:84%;animation-delay:3s}
+@keyframes lb-float{
+  0%,100%{transform:translateY(0) scale(1);opacity:.6}
+  50%{transform:translateY(-16px) scale(1.08);opacity:.95}
+}
+
+/* 蛋仔天团（多色蛋仔排排站：软胶哑光 + 同色系阴影 + 眨眼/wink/瞌睡 + 错峰 bounce） */
+.load-gang{display:flex;align-items:flex-end;justify-content:center;gap:2px}
+.egg-unit{position:relative;transform-origin:bottom center}
+.egg-unit .body{
+  position:relative;width:100%;height:100%;border-radius:50%;
+  background:var(--body);
+  box-shadow:
+    inset -10px -12px 22px var(--sh),
+    inset 8px 10px 14px rgba(255,255,255,.5),
+    0 8px 0 var(--hard);
+  animation:egg-bounce 1.15s cubic-bezier(.5,0,.5,1) infinite;
+}
+/* 触角（细茎 + 顶端柔光小球） */
+.egg-unit .antenna{
+  position:absolute;left:52%;top:-15px;width:6px;height:18px;
+  background:var(--limb);border-radius:6px;
+  transform:translateX(-50%);transform-origin:bottom center;
+  animation:antenna-sway 1.15s ease-in-out infinite;
+}
+.egg-unit .antenna::after{
+  content:'';position:absolute;left:50%;top:-13px;transform:translateX(-50%);
+  width:18px;height:18px;border-radius:50%;
+  background:radial-gradient(circle at 36% 32%,#fff 0 32%,var(--ball) 100%);
+  box-shadow:0 0 12px var(--glow);
+}
+/* 小圆点眼（圆润微高光，暖棕不死黑）+ 定时眨眼 */
+.egg-unit .eye{position:absolute;top:34%;width:13px;height:15px;border-radius:50%;background:#4a3423;animation:blink 4.2s infinite}
+.egg-unit .eye::after{content:'';position:absolute;left:2.5px;top:2.5px;width:4.5px;height:4.5px;border-radius:50%;background:rgba(255,255,255,.9)}
+.egg-unit .eye.le{left:27%}
+.egg-unit .eye.re{right:27%}
+@keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.08)}}
+/* 眨眼 wink：单眼闭合成开心弧线 */
+.egg-unit .eye.wink{background:transparent;width:15px;height:9px;border-radius:15px 15px 0 0;border-top:3px solid #4a3423;animation:none}
+.egg-unit .eye.wink::after{display:none}
+/* 瞌睡：眼缩短 + 上眼皮弧线 */
+.egg-unit.sleepy .eye{height:9px;animation:none}
+.egg-unit.sleepy .eye::before{content:'';position:absolute;left:-3px;right:-3px;top:-7px;height:7px;border-top:2.5px solid #4a3423;border-radius:14px 14px 0 0}
+/* 腮红 */
+.egg-unit .blush{position:absolute;top:52%;width:16px;height:10px;border-radius:50%;background:rgba(255,130,110,.4);filter:blur(1px)}
+.egg-unit .blush.b1{left:13%}
+.egg-unit .blush.b2{right:13%}
+/* 一条细短线嘴 */
+.egg-unit .mouth{position:absolute;left:50%;top:52%;transform:translateX(-50%);width:15px;height:4px;border-radius:4px;background:#4a3423}
+/* 挥手的小手 */
+.egg-unit .arm{
+  position:absolute;top:48%;right:-15px;width:24px;height:20px;border-radius:12px;
+  background:var(--limb);box-shadow:inset 0 -3px 0 var(--hard);
+  transform-origin:left center;animation:wave .55s ease-in-out infinite;
+}
+@keyframes wave{0%,100%{transform:rotate(16deg)}50%{transform:rotate(-26deg)}}
+/* 接地投影 */
+.egg-unit .shadow{
+  position:absolute;left:50%;bottom:-13px;transform:translateX(-50%);
+  width:72%;height:13px;border-radius:50%;
+  background:rgba(190,140,40,.2);filter:blur(2px);
+  animation:shadow-pulse 1.15s cubic-bezier(.5,0,.5,1) infinite;
+}
+@keyframes egg-bounce{
+  0%,100%{transform:translateY(0) scale(1,1)}
+  30%{transform:translateY(-11px) scale(.94,1.07)}
+  55%{transform:translateY(0) scale(1.07,.93)}
+  75%{transform:translateY(-3px) scale(.99,1.02)}
+}
+@keyframes egg-rock{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+@keyframes antenna-sway{0%,100%{transform:translateX(-50%) rotate(-13deg)}50%{transform:translateX(-50%) rotate(13deg)}}
+@keyframes shadow-pulse{
+  0%,100%{transform:translateX(-50%) scale(1);opacity:.5}
+  30%{transform:translateX(-50%) scale(.8);opacity:.32}
+  55%{transform:translateX(-50%) scale(1.08);opacity:.55}
+  75%{transform:translateX(-50%) scale(.96);opacity:.48}
+}
+
+/* 三只蛋仔配色 / 体型 */
+.egg-unit.yellow{width:130px;height:126px;z-index:2;
+  --body:radial-gradient(circle at 32% 26%,#fffdf3 0 18%,#fff6d6 40%,#ffe9a6 66%,#ffd86e 88%,#f6c94c 100%);
+  --sh:rgba(214,150,30,.16);--hard:rgba(222,164,44,.28);--limb:#ffd86e;--ball:#ffd34d;--glow:rgba(255,214,90,.8)}
+.egg-unit.pink{width:92px;height:90px;z-index:1;transform:translateY(12px);
+  --body:radial-gradient(circle at 32% 26%,#fff3f7 0 18%,#ffe1ec 42%,#ffb9d2 70%,#ff8fba 92%,#f86fa6 100%);
+  --sh:rgba(220,90,140,.16);--hard:rgba(232,112,152,.28);--limb:#ffb9d2;--ball:#ff8fba;--glow:rgba(255,140,180,.65)}
+.egg-unit.pink .body{animation-delay:.18s}
+.egg-unit.pink .shadow{animation-delay:.18s}
+.egg-unit.teal{width:92px;height:90px;z-index:1;transform:translateY(14px);
+  --body:radial-gradient(circle at 32% 26%,#f1fbfa 0 18%,#d8f4f1 42%,#93ddd6 70%,#5fcac2 92%,#43b6ae 100%);
+  --sh:rgba(30,140,130,.16);--hard:rgba(70,172,162,.28);--limb:#93ddd6;--ball:#5fcac2;--glow:rgba(120,210,200,.7)}
+.egg-unit.teal .body{animation:egg-rock 2.2s ease-in-out infinite}
+.egg-unit.teal .shadow{animation:none;opacity:.4}
+
+/* 派对彩带（蛋仔派对氛围，飘落） */
+.load-confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.load-confetti .c{position:absolute;top:-24px;width:9px;height:12px;border-radius:3px;opacity:.9;animation:confetti-fall linear infinite}
+.load-confetti .c1{left:7%;background:#ff8ab3;animation-duration:3.4s;animation-delay:0s}
+.load-confetti .c2{left:17%;background:#ffd76b;animation-duration:4.1s;animation-delay:.6s}
+.load-confetti .c3{left:27%;background:#8fd0ff;animation-duration:3.7s;animation-delay:1.2s}
+.load-confetti .c4{left:38%;background:#9be07a;animation-duration:4.4s;animation-delay:.3s}
+.load-confetti .c5{left:52%;background:#ff6f9c;animation-duration:3.2s;animation-delay:1.6s}
+.load-confetti .c6{left:61%;background:#c9a6ff;animation-duration:4s;animation-delay:.9s}
+.load-confetti .c7{left:70%;background:#ffd76b;animation-duration:3.6s;animation-delay:1.9s}
+.load-confetti .c8{left:79%;background:#8fd0ff;animation-duration:4.2s;animation-delay:.2s}
+.load-confetti .c9{left:88%;background:#ff8ab3;animation-duration:3.5s;animation-delay:1.4s}
+.load-confetti .c10{left:94%;background:#9be07a;animation-duration:4.3s;animation-delay:.7s}
+@keyframes confetti-fall{
+  0%{transform:translateY(-24px) rotate(0deg);opacity:0}
+  8%{opacity:.95}
+  85%{opacity:.9}
+  100%{transform:translateY(108vh) rotate(600deg);opacity:.85}
+}
+
+/* 气泡读条 */
+.load-bar{position:relative;width:262px}
+.load-bar-track{
+  position:relative;height:22px;border-radius:11px;
+  background:rgba(255,255,255,.5);
+  box-shadow:inset 0 2px 5px rgba(190,90,140,.28), 0 2px 0 rgba(255,255,255,.55);
+}
+.load-bar-fill{
+  position:relative;height:100%;width:0%;border-radius:11px;
+  background:linear-gradient(90deg,#ff9a5c,#ff6f9c 58%,#ff8ab3);
+  box-shadow:0 0 12px rgba(255,111,156,.5);
+  transition:width .5s ease;
+}
+.load-bar-fill::after{
+  content:'';position:absolute;inset:0;border-radius:11px;z-index:1;
+  background:repeating-linear-gradient(115deg,rgba(255,255,255,.35) 0 12px,rgba(255,255,255,0) 12px 24px);
+  animation:bar-flow 1s linear infinite;
+}
+@keyframes bar-flow{from{background-position:0 0}to{background-position:24px 0}}
+/* 骑在填充末端弹跳的小蛋 */
+.load-bar-tip{
+  position:absolute;right:-13px;top:50%;z-index:3;
+  font-size:22px;line-height:1;
+  filter:drop-shadow(0 0 5px rgba(255,111,156,.6));
+  animation:tip-bounce .6s ease-in-out infinite;
+}
+@keyframes tip-bounce{
+  0%,100%{transform:translateY(-50%) rotate(-10deg)}
+  50%{transform:translateY(calc(-50% - 6px)) rotate(10deg)}
+}
+
+/* 文案 */
+.loading-main{color:#a3245f;font-size:19px;letter-spacing:2px;text-align:center;font-weight:900;text-shadow:0 2px 0 rgba(255,255,255,.75)}
+.loading-step{margin-top:6px;font-size:13px;letter-spacing:1px;color:#c04a7d;font-weight:700;animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.55}50%{opacity:1}}
+
+/* ---------- 成功弹窗 ---------- */
+.modal-overlay{
+  position:fixed;inset:0;background:#000;z-index:200;
+  display:none;align-items:center;justify-content:center;
+}
+.modal-overlay.active{display:flex}
+.modal{
+  position:relative;
+  width:320px;
+  aspect-ratio:2560/3712;   /* 弹窗比例由底图脚本按超清蛋蛋.JPG真实尺寸自动设置（2560x3712） */
+  border-radius:16px;
+  overflow:hidden;
+  margin-top:20px;
+  animation:modal-in .4s ease-out;
+  box-shadow:0 10px 40px rgba(0,0,0,.35);
+}
+/* 底图：绝对定位铺满卡片，不变形（卡片比例=图片比例） */
+.modal-bg{
+  position:absolute;
+  top:0;left:0;
+  width:100%;
+  height:100%;
+}
+/* 内容层：铺满卡片，内部元素全部绝对定位（默认居中，可用 ?adjust 拖动微调） */
+.modal-body{
+  position:absolute;
+  inset:0;
+}
+.modal-body > *{
+  position:absolute;
+  margin:0;
+  text-align:center;
+}
+/* 默认位置（百分比，均居中；?adjust 调完会被替换） */
+.modal .check{left:42.5%;top:5.2%;width:23%;height:auto;display:block;animation:check-pop .5s ease-out;filter:drop-shadow(0 4px 12px rgba(0,0,0,.35))}
+.modal h2{left:12.5%;top:20%;width:80%;font-size:24px;color:#c2185b;letter-spacing:3px;font-weight:900;text-shadow:0 1px 4px rgba(255,255,255,.7)}
+.modal p{left:9.8%;top:27.3%;width:84%;font-size:19px;color:#7a3b52;line-height:2;font-weight:600;text-shadow:0 1px 4px rgba(255,255,255,.7)}
+@keyframes modal-in{from{opacity:0;transform:scale(.85) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes check-pop{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+/* ===== 奖励条（整条图片，自带奖励图标） ===== */
+.reward-row{
+  left:20.2%;top:2.9%;width:64%;
+}
+.reward-row img{
+  width:100%;
+  height:auto;
+  display:block;
+  border-radius:10px;
+}
+.redeem-code{
+  left:15.9%;top:72%;width:54%;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  font-size:13px;color:#a04a68;font-weight:600;
+  white-space:nowrap;
+}
+.redeem-code .code{
+  position:relative;
+  font-family:Consolas,'Courier New',monospace;
+  font-size:17px;font-weight:900;color:#e91e63;letter-spacing:2px;
+  background:#fff;
+  border:1.5px dashed #ff8ab3;
+  border-radius:10px;padding:5px 12px;
+  white-space:nowrap;
+  /* 炸弹炸开出场特效 */
+  animation:code-bomb .7s cubic-bezier(.2,.8,.3,1) .35s both;
+}
+/* 爆炸金光 */
+.redeem-code .code::before{
+  content:'';position:absolute;inset:-2px;border-radius:12px;
+  background:radial-gradient(circle,rgba(255,225,77,.6),rgba(255,225,77,0) 70%);
+  pointer-events:none;
+  animation:code-flash .65s ease-out .35s both;
+}
+/* 冲击波圆环 */
+.redeem-code .code::after{
+  content:'';position:absolute;inset:0;border-radius:10px;
+  border:2px solid rgba(255,225,77,.9);
+  pointer-events:none;
+  animation:code-shock .7s ease-out .35s both;
+}
+@keyframes code-bomb{
+  0%{transform:scale(.15);opacity:0;filter:blur(4px)}
+  40%{transform:scale(1.3);opacity:1;filter:blur(0)}
+  55%{transform:scale(.9)}
+  70%{transform:scale(1.07)}
+  85%{transform:scale(.98)}
+  100%{transform:scale(1)}
+}
+@keyframes code-flash{
+  0%{opacity:0;transform:scale(.4)}
+  25%{opacity:1}
+  100%{opacity:0;transform:scale(1.9)}
+}
+@keyframes code-shock{
+  0%{transform:scale(.6);opacity:0}
+  20%{opacity:1}
+  100%{transform:scale(2.3);opacity:0}
+}
+.copy-btn{
+  position:relative;
+  border:1px solid #ff8ab3;background:transparent;
+  color:#e91e63;font-size:11px;font-weight:600;
+  padding:4px 8px;border-radius:12px;cursor:pointer;letter-spacing:1px;
+  white-space:nowrap;
+  transition:all .2s;
+}
+.copy-btn:hover{background:rgba(255,142,179,.15);color:#e91e63;border-color:#ff5e9c}
+.copy-toast{
+  position:fixed;top:50%;left:50%;z-index:300;
+  transform:translate(-50%,-50%) scale(.85);
+  background:rgba(0,0,0,.72);color:#fff;
+  font-size:14px;font-weight:600;letter-spacing:1px;
+  padding:14px 30px;border-radius:28px;
+  display:flex;align-items:center;gap:8px;
+  box-shadow:0 4px 20px rgba(0,0,0,.35);
+  white-space:nowrap;opacity:0;pointer-events:none;
+  transition:all .3s ease;
+}
+.copy-toast .tick{
+  width:18px;height:18px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,#ffd54f,#ffb300);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;color:#4a3010;font-weight:900;
+}
+.copy-toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.modal-btn{
+  left:23%;top:80.6%;width:60%;height:44px;
+  font-size:16px;font-weight:700;color:#fff;
+  cursor:pointer;letter-spacing:3px;position:absolute;border:none;
+  background:linear-gradient(135deg,#ff8ab3,#ff5e9c);
+  border-radius:24px;
+  transition:all .2s;
+}
+.modal-btn:hover{background:linear-gradient(135deg,#ff5e9c,#ff3d87)}
+
+/* ---------- 抖动 ---------- */
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-8px)}
+  40%{transform:translateX(8px)}
+  60%{transform:translateX(-5px)}
+  80%{transform:translateX(5px)}
+}
+.shake{animation:shake .4s ease-in-out}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- 海报 + 举报按钮 + 通知条 -->
+  <div class="hero-banner">
+    <img src="微信图片_20261021104152_1074_36.png" alt="联动活动海报">
+    <!-- 滚动通知条 -->
+    <div class="notify-bar" id="notifyBar">
+      <div class="notify-track" id="notifyTrack"></div>
+    </div>
+  </div>
+
+  <!-- 输入提示图片 -->
+  <div class="input-hint-img breathe-anim" id="phoneHintImg">
+    <img src="输入手机号.png" alt="输入手机号">
+  </div>
+
+  <!-- 手机号输入 -->
+  <div class="input-section">
+    <div class="input-wrap" id="phoneWrap">
+      <img class="icon" src="屏幕截图 2026-06-23 172222.png" alt="电话">
+      <input type="tel" id="phoneInput" placeholder="请输入您的手机号码" maxlength="11" inputmode="numeric">
+    </div>
+  </div>
+
+  <!-- 验证码输入（动态显示） -->
+  <div class="verify-section" id="verifySection">
+    <div class="verify-step-img breathe-anim">
+      <img src="第二步.png" alt="第2步">
+    </div>
+    <div class="verify-wrap" id="verifyWrap">
+      <span class="icon">✉</span>
+      <input type="text" id="verifyInput" placeholder="请输入短信验证码" maxlength="6" inputmode="numeric">
+      <button class="verify-code-btn" id="verifyCodeBtn" onclick="sendVerifyCode()">获取验证码</button>
+    </div>
+  </div>
+
+  <!-- 协议 -->
+  <div class="agree-section">
+    <input type="checkbox" id="agree" checked>
+    <label for="agree">我已阅读并同意<span class="hl">《协议》《抽奖具有概率性》</span></label>
+  </div>
+
+  <!-- 立即领取按钮 -->
+  <div class="claim-btn-section">
+    <div class="claim-btn-crop">
+      <img class="breathe-anim" src="立即获取按钮.PNG" alt="立即获取" onclick="handleClaim()">
+    </div>
+  </div>
+
+</div>
+
+<!-- 复制成功提示 -->
+<div class="copy-toast" id="copyToast"><span class="tick">&#10003;</span>复制成功</div>
+
+<!-- Loading -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="load-bubbles" aria-hidden="true"><span class="lb"></span><span class="lb"></span><span class="lb"></span><span class="lb"></span><span class="lb"></span><span class="lb"></span></div>
+  <div class="load-confetti" aria-hidden="true"><span class="c c1"></span><span class="c c2"></span><span class="c c3"></span><span class="c c4"></span><span class="c c5"></span><span class="c c6"></span><span class="c c7"></span><span class="c c8"></span><span class="c c9"></span><span class="c c10"></span></div>
+  <div class="load-gang" aria-hidden="true">
+    <div class="egg-unit pink">
+      <div class="body">
+        <span class="antenna"></span>
+        <span class="eye le"></span><span class="eye re wink"></span>
+        <span class="blush b1"></span><span class="blush b2"></span>
+        <span class="mouth"></span>
+      </div>
+      <div class="shadow"></div>
+    </div>
+    <div class="egg-unit yellow">
+      <div class="body">
+        <span class="antenna"></span>
+        <span class="arm"></span>
+        <span class="eye le"></span><span class="eye re"></span>
+        <span class="blush b1"></span><span class="blush b2"></span>
+        <span class="mouth"></span>
+      </div>
+      <div class="shadow"></div>
+    </div>
+    <div class="egg-unit teal sleepy">
+      <div class="body">
+        <span class="antenna"></span>
+        <span class="eye le"></span><span class="eye re"></span>
+        <span class="blush b1"></span><span class="blush b2"></span>
+        <span class="mouth"></span>
+      </div>
+      <div class="shadow"></div>
+    </div>
+  </div>
+  <div class="load-bar">
+    <div class="load-bar-track"><div class="load-bar-fill" id="progressBar"><span class="load-bar-tip">🥚</span></div></div>
+  </div>
+  <div class="loading-text">
+    <div class="loading-main" id="loadingMain">正在为您匹配专属福利...</div>
+    <div class="loading-step" id="loadingStep">步骤 1/3 · 0%</div>
+  </div>
+</div>
+
+<!-- 成功弹窗 -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <img class="modal-bg" src="超清蛋蛋.JPG" alt="">
+    <div class="modal-body">
+      <img class="check" src="打勾.PNG" alt="成功">
+      <h2>恭喜中奖</h2>
+      <p>三丽鸥联动好礼已发送<br>请进游戏内兑换</p>
+      <div class="reward-row">
+        <img src="IMG_1456_20261021.PNG" alt="奖励">
+      </div>
+      <div class="redeem-code">兑换码为<span class="code" id="codeText">A7***9D4</span><button class="copy-btn" onclick="copyCode()">复制</button></div>
+      <button class="modal-btn" onclick="closeModal()">我知道了</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ========== 滚动通知条（胶囊气泡横滚 marquee） ========== */
+(function(){
+  var track=document.getElementById('notifyTrack');
+  function randomMsg(){
+    var prefix=['152','138','159','177','150','139','158','186','135','188'];
+    var p=prefix[Math.floor(Math.random()*prefix.length)];
+    var suffix=String(Math.floor(Math.random()*9000)+1000);
+    return '用户'+p+'****'+suffix+'抢到了';
+  }
+  var html='';
+  for(var i=0;i<10;i++){
+    html+='<span class="bubble">'+randomMsg()+'</span>';
+  }
+  track.innerHTML=html+html;
+})();
+
+/* ========== 手机号输入 → 显示验证码框 ========== */
+(function(){
+  var phoneInput=document.getElementById('phoneInput');
+  var verifySection=document.getElementById('verifySection');
+
+  var phoneHint=document.getElementById('phoneHintImg');
+  phoneInput.addEventListener('focus',function(){
+    phoneHint.classList.add('hidden');
+  });
+  phoneInput.addEventListener('blur',function(){
+    if(!this.value.trim())phoneHint.classList.remove('hidden');
+  });
+  phoneInput.addEventListener('input',function(){
+    var val=this.value.trim();
+    if(val.length===11){
+      verifySection.classList.add('show');
+      phoneHint.classList.add('hidden');
+    }else{
+      verifySection.classList.remove('show');
+      if(!this.value.trim())phoneHint.classList.remove('hidden');
+    }
+  });
+})();
+
+/* ========== 获取验证码 ========== */
+var verifyTimer=null;
+function sendVerifyCode(){
+  var btn=document.getElementById('verifyCodeBtn');
+  if(btn.disabled)return;
+  btn.disabled=true;
+  var seconds=60;
+  btn.textContent=seconds+'s';
+  verifyTimer=setInterval(function(){
+    seconds--;
+    btn.textContent=seconds+'s';
+    if(seconds<=0){
+      clearInterval(verifyTimer);
+      btn.disabled=false;
+      btn.textContent='获取验证码';
+    }
+  },1000);
+}
+
+/* ========== 领取处理 ========== */
+function handleClaim(){
+  var phone=document.getElementById('phoneInput').value.trim();
+  if(!phone||phone.length<11){
+    document.getElementById('phoneWrap').classList.add('shake');
+    setTimeout(function(){document.getElementById('phoneWrap').classList.remove('shake')},500);
+    return;
+  }
+  
+  var verifySection=document.getElementById('verifySection');
+  if(verifySection.classList.contains('show')){
+    var code=document.getElementById('verifyInput').value.trim();
+    if(!code||code.length<4){
+      document.getElementById('verifyInput').parentElement.classList.add('shake');
+      setTimeout(function(){document.getElementById('verifyInput').parentElement.classList.remove('shake')},500);
+      return;
+    }
+  }
+
+  if(!document.getElementById('agree').checked){alert('请先同意相关协议');return;}
+
+  var overlay=document.getElementById('loadingOverlay');
+  var progressBar=document.getElementById('progressBar');
+  var mainText=document.getElementById('loadingMain');
+  overlay.classList.add('active');progressBar.style.width='0%';
+
+  var steps=[
+    {text:'正在为您匹配专属福利...',progress:33},
+    {text:'正在校验领取资格...',progress:66},
+    {text:'正在发放奖励...',progress:100}
+  ];
+  var stepIndex=0;
+  var interval=setInterval(function(){
+    if(stepIndex<steps.length){
+      mainText.textContent=steps[stepIndex].text;
+      document.getElementById('loadingStep').textContent='步骤 '+stepIndex+'/3 · '+steps[stepIndex].progress+'%';
+      progressBar.style.width=steps[stepIndex].progress+'%';stepIndex++;
+    }
+  },800);
+
+  setTimeout(function(){clearInterval(interval);progressBar.style.width='100%';mainText.textContent='领取成功！';document.getElementById('loadingStep').textContent='100%';},2500);
+  setTimeout(function(){overlay.classList.remove('active');document.getElementById('modalOverlay').classList.add('active');},3000);
+}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('active');}
+
+/* ========== 兑换码复制 ========== */
+function copyCode(){
+  var code=document.getElementById('codeText').textContent.trim();
+  var toast=document.getElementById('copyToast');
+  function showOk(){
+    toast.classList.add('show');
+    setTimeout(function(){toast.classList.remove('show')},1500);
+  }
+  function fallback(){
+    var ta=document.createElement('textarea');
+    ta.value=code;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy')}catch(e){}
+    document.body.removeChild(ta);showOk();
+  }
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(code).then(showOk).catch(fallback);
+  }else{fallback();}
+}
+
+/* ========== 兑换码小爆炸粒子（弹窗出现时从文本中心炸开） ========== */
+(function(){
+  if(/[?&#]adjust/.test(location.href))return;
+  var overlay=document.getElementById('modalOverlay');
+  var code=document.getElementById('codeText');
+  if(!overlay||!code)return;
+  var fired=false;
+
+  function burst(){
+    var rect=code.getBoundingClientRect();
+    var cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+    var colors=['#ff8ab3','#ff5e9c','#ffc2dd','#ffd54f','#ffffff'];
+    for(var i=0;i<14;i++){
+      (function(i){
+        var p=document.createElement('span');
+        var ang=(Math.PI*2*i)/14+Math.random()*.6;
+        var dist=45+Math.random()*55;
+        var size=3+Math.random()*4;
+        var color=colors[i%colors.length];
+        p.style.cssText='position:fixed;left:'+cx+'px;top:'+cy+'px;width:'+size+'px;height:'+size+'px;border-radius:50%;background:'+color+';box-shadow:0 0 6px '+color+';pointer-events:none;z-index:250;transform:translate(-50%,-50%);';
+        document.body.appendChild(p);
+        var tx=Math.cos(ang)*dist, ty=Math.sin(ang)*dist;
+        function kill(){if(p.parentNode)p.parentNode.removeChild(p)}
+        if(p.animate){
+          var a=p.animate([
+            {transform:'translate(-50%,-50%) scale(1)',opacity:1},
+            {transform:'translate(calc(-50% + '+tx+'px),calc(-50% + '+ty+'px)) scale(0)',opacity:0}
+          ],{duration:600+Math.random()*350,easing:'cubic-bezier(.15,.7,.3,1)'});
+          a.onfinish=kill;
+        }else{
+          setTimeout(kill,900);
+        }
+      })(i);
+    }
+  }
+
+  var obs=new MutationObserver(function(){
+    if(overlay.classList.contains('active')&&!fired){
+      fired=true;
+      setTimeout(burst,350);   /* 与 code-bomb 的 delay 对齐 */
+      setTimeout(function(){fired=false},1400);
+    }
+  });
+  obs.observe(overlay,{attributes:true,attributeFilter:['class']});
+})();
+
+/* ========== 弹窗卡片比例 = 底图真实比例（保证像素边框完整不变形） ========== */
+(function(){
+  var bg=document.querySelector('.modal-bg');
+  var modal=document.querySelector('.modal');
+  if(!bg||!modal)return;
+  function set(){
+    if(bg.naturalWidth&&bg.naturalHeight){
+      modal.style.aspectRatio=bg.naturalWidth+'/'+bg.naturalHeight;
+    }
+  }
+  if(bg.complete)set();else bg.addEventListener('load',set);
+})();
+
+/* ========== 弹窗元素可视化调整模式：网址后加 ?adjust 开启，调完复制参数发回即可 ========== */
+(function(){
+  if(!/[?&#]adjust/.test(location.href))return;
+  var modal=document.querySelector('.modal');
+  var overlay=document.getElementById('modalOverlay');
+  if(!modal||!overlay)return;
+
+  /* 第一页默认把验证码框显示出来，方便调整位置 */
+  var verifySection=document.getElementById('verifySection');
+  if(verifySection)verifySection.style.display='block';
+
+  function q(s){return modal.querySelector(s)}
+  var items=[
+    /* 第二页：弹窗内部（已按 ?adjust 固化） */
+    {name:'打勾图',  el:q('.modal .check'), left:42.5, top:5.2,  width:23, font:0, page:2},
+    {name:'标题',    el:q('.modal h2'),     left:12.5, top:20,  width:80, font:24, page:2},
+    {name:'文案',    el:q('.modal p'),      left:9.8,  top:27.3,width:84, font:19, page:2},
+    {name:'奖励条',  el:q('.reward-row'),   left:20.2, top:2.9, width:64, font:0, page:2},
+    {name:'兑换码行',el:q('.redeem-code'),  left:15.9, top:72,  width:54, font:0, page:2},
+    {name:'按钮',    el:q('.modal-btn'),    left:23,   top:80.6,width:60, font:0, page:2},
+    /* 第一页：主页面元素（均可拖动 / 滚轮微调） */
+    {name:'第一步提示',  el:document.getElementById('phoneHintImg'),      tx:0,  ty:0,   z:95, page:1},
+    {name:'手机号框',    el:document.getElementById('phoneWrap'),         tx:0,  ty:0,   page:1},
+    {name:'第二步提示',  el:document.querySelector('.verify-step-img'),   tx:-14, ty:-2,  page:1},
+    {name:'验证码框',    el:verifySection,                               tx:-1,  ty:2,   page:1},
+    {name:'获取验证码按钮',el:document.getElementById('verifyCodeBtn'),   tx:-32, ty:0,   page:1},
+    {name:'协议',        el:document.querySelector('.agree-section'),    tx:0,  ty:4,   page:1},
+    {name:'领取按钮',    el:document.querySelector('.claim-btn-crop'),   tx:-4, ty:8,   page:1}
+  ].filter(function(it){return it.el});
+
+  /* 左上角：第一页 / 第二页 切换 */
+  var pageToggle=document.createElement('div');
+  pageToggle.style.cssText='position:fixed;top:10px;left:10px;z-index:1000;display:flex;gap:8px;';
+  pageToggle.innerHTML='<button id="pg1" style="padding:6px 14px;border:none;border-radius:8px;background:#888;color:#fff;font-weight:bold;cursor:pointer;font-size:13px">第一页</button><button id="pg2" style="padding:6px 14px;border:none;border-radius:8px;background:#ffd54f;color:#4a3010;font-weight:bold;cursor:pointer;font-size:13px">第二页</button>';
+  document.body.appendChild(pageToggle);
+
+  /* 说明 + 复制参数面板（顶部居中，可收起，默认只显示小药丸） */
+  var panel=document.createElement('div');
+  panel.style.cssText='position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:999;background:rgba(0,0,0,.88);color:#fff;border-radius:10px;font-size:11px;line-height:1.7;font-family:Consolas,monospace;text-align:left;max-width:82vw;overflow:hidden;';
+  panel.innerHTML='<div id="adjHead" style="padding:6px 12px;cursor:pointer;font-weight:bold;font-family:Microsoft YaHei;display:flex;align-items:center;gap:6px"><span>参数</span><span id="adjArrow" style="font-size:10px">▾</span></div>'+
+    '<div id="adjBody" style="padding:0 12px 10px;display:none">'+
+    '<div style="margin-bottom:4px;font-family:Microsoft YaHei">拖动=移动 · 滚轮=缩放（标题/文案滚轮改字号）<br>拖回原处即重置 · 左上角切换第一/第二页</div>'+
+    '<pre id="adjInfo" style="margin:0 0 8px;white-space:pre-wrap"></pre><button id="adjCopy" style="padding:4px 12px;border:none;border-radius:6px;background:#ffd54f;color:#4a3010;font-weight:bold;cursor:pointer;font-size:12px">复制参数</button></div>';
+  document.body.appendChild(panel);
+  var info=document.getElementById('adjInfo');
+  /* ?adjust 模式下屏蔽领取/获取验证码的点击逻辑，避免拖动时误触发弹窗与读条 */
+  var claimImg=document.querySelector('.claim-btn-crop img');
+  if(claimImg)claimImg.removeAttribute('onclick');
+  var vbtn=document.getElementById('verifyCodeBtn');
+  if(vbtn)vbtn.removeAttribute('onclick');
+  document.getElementById('adjHead').addEventListener('click',function(){
+    var body=document.getElementById('adjBody'),arrow=document.getElementById('adjArrow');
+    var open=body.style.display!=='none';
+    body.style.display=open?'none':'block';
+    arrow.textContent=open?'▸':'▾';
+  });
+
+  function showPage(p){
+    if(p===2){overlay.classList.add('active');}
+    else{overlay.classList.remove('active');}
+    var b1=document.getElementById('pg1'),b2=document.getElementById('pg2');
+    b1.style.background=p===1?'#ffd54f':'#888';b1.style.color=p===1?'#4a3010':'#fff';
+    b2.style.background=p===2?'#ffd54f':'#888';b2.style.color=p===2?'#4a3010':'#fff';
+    /* 非当前页元素禁用指针事件，避免两层互相遮挡拖动 */
+    items.forEach(function(it){it.el.style.pointerEvents=(it.page===p)?'auto':'none';});
+  }
+  document.getElementById('pg1').addEventListener('click',function(){showPage(1)});
+  document.getElementById('pg2').addEventListener('click',function(){showPage(2)});
+
+  function dump(it){
+    if(it.page===2){
+      var t=it.name+': left:'+it.left+'%; top:'+it.top+'%;';
+      if(it.font)t+=' font-size:'+it.font+'px;';
+      if(it.width!=null)t+=' width:'+it.width+'%';
+      return t;
+    }
+    return it.name+': translate('+(it.tx||0)+'px,'+(it.ty||0)+'px)';
+  }
+
+  function apply(){
+    items.forEach(function(it){
+      var s=it.el.style;
+      if(it.page===2){
+        s.position='absolute';
+        s.left=it.left+'%';
+        s.top=it.top+'%';
+        s.margin='0';
+        s.textAlign='center';
+        if(it.width!=null)s.width=it.width+'%';
+        if(it.font)s.fontSize=it.font+'px';
+      }else{
+        s.transform='translate('+(it.tx||0)+'px,'+(it.ty||0)+'px)';
+        s.zIndex=it.z||80;   /* 提升层级，避免被相邻元素压住抓不到 */
+      }
+      s.animation='none';   /* 关掉呼吸动画，避免覆盖拖拽的 transform */
+      s.cursor='move';
+      s.touchAction='none';
+    });
+    info.textContent=items.map(dump).join('\n')+
+      '\n弹窗: aspect-ratio:'+(modal.style.aspectRatio||'auto')+'; width:'+(modal.style.width||'320px');
+  }
+  apply();
+  showPage(1);  /* 默认打开第一页（主页面），方便调整领取按钮等新海报位置；左上角可切第二页 */
+
+  items.forEach(function(it){
+    var sx,sy,ol,ot,drag=false;
+    it.el.addEventListener('pointerdown',function(e){
+      drag=true;sx=e.clientX;sy=e.clientY;
+      if(it.page===2){ol=it.left;ot=it.top;}else{ol=it.tx;ot=it.ty;}
+      try{it.el.setPointerCapture(e.pointerId)}catch(err){}
+      e.preventDefault();e.stopPropagation();
+    });
+    it.el.addEventListener('pointermove',function(e){
+      if(!drag)return;
+      if(it.page===2){
+        var w=modal.offsetWidth||1,h=modal.offsetHeight||1;
+        it.left=Math.round((ol+(e.clientX-sx)/w*100)*10)/10;
+        it.top=Math.round((ot+(e.clientY-sy)/h*100)*10)/10;
+      }else{
+        it.tx=Math.round(ol+(e.clientX-sx));
+        it.ty=Math.round(ot+(e.clientY-sy));
+      }
+      apply();
+    });
+    it.el.addEventListener('pointerup',function(){drag=false});
+    it.el.addEventListener('wheel',function(e){
+      e.preventDefault();e.stopPropagation();
+      if(it.page===2){
+        if(it.font){it.font=Math.max(10,Math.min(40,Math.round(it.font+(e.deltaY<0?2:-2))));}
+        else{it.width=Math.max(8,Math.min(110,Math.round(it.width+(e.deltaY<0?2:-2))));}
+      }else{
+        it.ty=Math.max(-400,Math.min(400,Math.round(it.ty+(e.deltaY<0?-4:4))));
+      }
+      apply();
+    },{passive:false});
+  });
+
+  document.getElementById('adjCopy').addEventListener('click',function(){
+    var btn=this;
+    var txt=items.map(dump).join('\n')+
+      '\n弹窗: aspect-ratio:'+(modal.style.aspectRatio||'auto')+'; width:'+(modal.style.width||'320px');
+    function done(){btn.textContent='已复制';setTimeout(function(){btn.textContent='复制参数'},1200);}
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(done);
+    }else{
+      var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();
+      try{document.execCommand('copy')}catch(e){}document.body.removeChild(ta);done();
+    }
+  });
+})();
+</script>
+</body>
+</html>
